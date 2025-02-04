@@ -1,9 +1,9 @@
 [package]
 name = "gcaptn/cyan-ui"
-version = "0.1.0"
+version = "0.1.7"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
-include = ["src/**/*", "default.project.json", "wally.toml", "LICENSE"]
+include = ["src", "src/**/*", "default.project.json", "wally.toml", "LICENSE"]
 exclude = ["*"]
 
 [dependencies]
