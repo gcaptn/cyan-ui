@@ -1,0 +1,23 @@
+# tomlrun <script>
+
+# run after running wally install
+# https://github.com/JohnnyMorganz/wally-package-types
+fix-package-types = """\
+  rojo sourcemap dev.project.json --output sourcemap.json \
+  && wally-package-types --sourcemap sourcemap.json Packages/ \
+  """
+
+# creates a sourcemap.json from dev.project.json, so Luau LSP won't error
+lsp-sourcemap = "rojo sourcemap dev.project.json --output sourcemap.json"
+
+dev = "rojo serve dev.project.json"
+
+fmt = "stylua src"
+
+lint = "selene src"
+
+# Build the standalone CyanUI module
+build = """\
+  shx mkdir -p dist \
+  && rojo build standalone.project.json --output dist/CyanUI.rbxm\
+  """

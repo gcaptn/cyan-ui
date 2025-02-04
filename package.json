@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "tomlrun": "tomlrun"
+  },
+  "devDependencies": {
+    "shx": "^0.3.4",
+    "tomlrun": "^0.1.7"
+  }
+}

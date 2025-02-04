@@ -1,0 +1,14 @@
+{
+  "name": "CyanUI",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Packages": {
+        "$path": "Packages",
+        "CyanUI": {
+          "$path": "src"
+        }
+      }
+    }
+  }
+}

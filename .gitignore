@@ -1,0 +1,9 @@
+Packages/
+node_modules/
+*.lock
+package-lock.json
+
+sourcemap.json
+
+dist/
+notes/

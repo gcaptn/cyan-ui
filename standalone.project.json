@@ -1,0 +1,12 @@
+{
+  "name": "CyanUI",
+  "tree": {
+    "$path": "standalone",
+    "Packages": {
+      "$path": "Packages",
+      "CyanUI": {
+        "$path": "src"
+      }
+    }
+  }
+}
