@@ -12,9 +12,9 @@ lsp-sourcemap = "rojo sourcemap dev.project.json --output sourcemap.json"
 
 dev = "rojo serve dev.project.json"
 
-fmt = "stylua src"
+fmt = "stylua src examples/ExamplePlugin/src"
 
-lint = "selene src"
+lint = "selene src examples/ExamplePlugin/src"
 
 # Build the standalone CyanUI module
 build = """\

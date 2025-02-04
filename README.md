@@ -3,7 +3,7 @@
 A UI component library for [Fusion](https://github.com/dphfox/Fusion).
 
 ## Examples
-See [UI Utilities ↗️](https://devforum.roblox.com/t/3400451)
+See the example project in the `examples` folder or run the CyanUI storybook inside Studio. To see it in use, check out [UI Utilities ↗️](https://devforum.roblox.com/t/3400451)
 
 
 ## Installing
