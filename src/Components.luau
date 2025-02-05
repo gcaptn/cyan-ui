@@ -30,6 +30,12 @@ end
 
 -- Primitives
 
+function Components.Round(scope: Fusion.Scope<any>)
+	return scope:New "UICorner" {
+		CornerRadius = UDim2.fromScale(1, 0),
+	}
+end
+
 local function computedUDim(
 	scope: Fusion.Scope<any>,
 	scale: Fusion.UsedAs<number>,
@@ -375,6 +381,7 @@ end
 
 local function createButtonTransitions(
 	scope: Fusion.Scope<any>,
+	buttonType: "ImageButton" | "TextButton",
 	variant: PrimaryOrSecondary,
 	theme: Types.Theme
 )
@@ -388,12 +395,14 @@ local function createButtonTransitions(
 				Press = colors.AccentPressed,
 				NonInteractable = colors.DisabledBg,
 			},
-			TextColor3 = {
-				Idle = colors.AccentFg,
-				Hover = colors.AccentHoverFg,
-				Press = colors.AccentPressedFg,
-				NonInteractable = colors.DisabledFg,
-			},
+			TextColor3 = if buttonType == "TextButton"
+				then {
+					Idle = colors.AccentFg,
+					Hover = colors.AccentHoverFg,
+					Press = colors.AccentPressedFg,
+					NonInteractable = colors.DisabledFg,
+				}
+				else nil,
 		}
 		else {
 			BackgroundColor3 = {
@@ -402,12 +411,14 @@ local function createButtonTransitions(
 				Press = colors.PressedBgSecondary,
 				NonInteractable = colors.DisabledBg,
 			},
-			TextColor3 = {
-				Idle = colors.FgSecondary,
-				Hover = colors.HoverFgSecondary,
-				Press = colors.PressedFgSecondary,
-				NonInteractable = colors.DisabledFg,
-			},
+			TextColor3 = if buttonType == "TextButton"
+				then {
+					Idle = colors.FgSecondary,
+					Hover = colors.HoverFgSecondary,
+					Press = colors.PressedFgSecondary,
+					NonInteractable = colors.DisabledFg,
+				}
+				else nil,
 			BorderSizePixel = {
 				Idle = sizes.Border,
 				Hover = sizes.Border,
@@ -488,8 +499,12 @@ function Components.TextButton(
 		PadSmall = Components.PadSmall,
 	}
 
-	local transitions =
-		createButtonTransitions(scope, props.Variant or "Primary", theme)
+	local transitions = createButtonTransitions(
+		scope,
+		"TextButton",
+		props.Variant or "Primary",
+		theme
+	)
 
 	return scope:ButtonBase {
 		ClassName = "TextButton",
@@ -535,8 +550,12 @@ function Components.CheckboxButton(
 
 	local checkedButton = scope:ButtonBase {
 		ClassName = "TextButton",
-		Variant = "Primary",
-		Transitions = createButtonTransitions(scope, "Primary", theme),
+		Transitions = createButtonTransitions(
+			scope,
+			"TextButton",
+			"Primary",
+			theme
+		),
 		ButtonProps = {
 			Interactable = props.Interactable,
 			Text = "✓",
@@ -556,8 +575,12 @@ function Components.CheckboxButton(
 
 	local uncheckedButton = scope:ButtonBase {
 		ClassName = "TextButton",
-		Variant = "Primary",
-		Transitions = createButtonTransitions(scope, "Secondary", theme),
+		Transitions = createButtonTransitions(
+			scope,
+			"TextButton",
+			"Secondary",
+			theme
+		),
 		ButtonProps = {
 			Interactable = props.Interactable,
 			Text = "",
@@ -583,6 +606,79 @@ function Components.CheckboxButton(
 	}
 end
 
+function Components.RadioButton(
+	scope: Fusion.Scope<any>,
+	props: {
+		Value: Fusion.UsedAs<boolean>,
+		Interactable: Fusion.UsedAs<boolean>?,
+		OnClick: Fusion.UsedAs<nil | () -> unknown?>,
+	}
+): Fusion.Child
+	local theme = Themes.ThemeContext:now()
+	local colors, sizes = theme.Colors, theme.Sizes
+
+	local scope = scope:innerScope {
+		ButtonBase = Components.ButtonBase,
+		FrameAutoXY = Components.FrameAutoXY,
+		Round = Components.Round,
+	}
+
+	return scope:FrameAutoXY {
+		[Fusion.Children] = {
+			scope:ButtonBase {
+				ClassName = "ImageButton",
+				Transitions = createButtonTransitions(
+					scope,
+					"ImageButton",
+					"Secondary",
+					theme
+				),
+				ButtonProps = {
+					Interactable = props.Interactable,
+					BorderSizePixel = 1,
+					Size = computedUDim2(
+						scope,
+						0,
+						sizes.NormalIcon,
+						0,
+						sizes.NormalIcon
+					),
+					[Fusion.Children] = {
+						scope:Round {},
+						scope:New "Frame" {
+							BackgroundColor3 = scope:Tween(
+								scope:Computed(function(use)
+									local disabled = if props.Interactable
+											~= nil
+										then not use(props.Interactable)
+										else false
+									return if disabled
+										then use(colors.DisabledFg)
+										else use(colors.Accent)
+								end),
+								UI_TWEENINFO
+							),
+							BorderSizePixel = 0,
+							Size = scope:Computed(function(use)
+								return UDim2.fromOffset(
+									0.5 * use(sizes.NormalIcon),
+									0.5 * use(sizes.NormalIcon)
+								)
+							end),
+							Visible = props.Value,
+							AnchorPoint = Vector2.new(0.5, 0.5),
+							Position = UDim2.fromScale(0.5, 0.5),
+							[Fusion.Children] = {
+								scope:Round {},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+end
+
 function Components.Checkbox(
 	scope: Fusion.Scope<any>,
 	props: {
@@ -602,6 +698,39 @@ function Components.Checkbox(
 		[Fusion.Children] = {
 			scope:CheckboxButton {
 				Value = props.Value,
+				Interactable = props.Interactable,
+				OnClick = function()
+					local onChange = Fusion.peek(props.OnChange)
+					if onChange then
+						onChange(not Fusion.peek(props.Value))
+					end
+				end,
+			},
+			scope:BodyText { Text = props.Label },
+		},
+	}
+end
+
+function Components.Radio(
+	scope: Fusion.Scope<any>,
+	props: {
+		Label: Fusion.UsedAs<string>,
+		Value: Fusion.UsedAs<boolean>,
+		Interactable: Fusion.UsedAs<boolean>?,
+		OnChange: Fusion.UsedAs<nil | (value: boolean) -> unknown?>,
+	}
+): Fusion.Child
+	local scope = scope:innerScope {
+		Row = Components.Row,
+		CheckboxButton = Components.CheckboxButton,
+		BodyText = Components.BodyText,
+	}
+
+	return scope:Row {
+		[Fusion.Children] = {
+			scope:RadioButton {
+				Value = props.Value,
+				Interactable = props.Interactable,
 				OnClick = function()
 					local onChange = Fusion.peek(props.OnChange)
 					if onChange then
@@ -781,13 +910,11 @@ function Components.ScrollFrame(
 	}
 end
 
--- Complex components with logic
-
 local function CollapsibleHeader(
 	scope: Fusion.Scope<any>,
 	props: {
-		isCollapsed: Fusion.Value<boolean>,
-		Label: Fusion.Value<string>,
+		isCollapsed: Fusion.UsedAs<boolean>,
+		Label: Fusion.UsedAs<string>,
 	}
 )
 	local theme = Themes.ThemeContext:now()
@@ -802,7 +929,12 @@ local function CollapsibleHeader(
 
 	return scope:ButtonBase {
 		ClassName = "TextButton",
-		Transitions = createButtonTransitions(scope, "Secondary", theme),
+		Transitions = createButtonTransitions(
+			scope,
+			"TextButton",
+			"Secondary",
+			theme
+		),
 		ButtonProps = {
 			Text = "",
 			BorderColor3 = colors.Border,

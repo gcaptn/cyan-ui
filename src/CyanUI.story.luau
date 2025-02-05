@@ -143,6 +143,29 @@ return function(target)
 											},
 										},
 									},
+									-- Radio
+									scope:HeadingText { Text = "Radio" },
+									scope:Radio {
+										Label = "With label",
+										Value = true,
+										Interactable = false,
+									},
+									scope:Row {
+										[Fusion.Children] = {
+											scope:RadioButton { Value = true },
+											scope:RadioButton {
+												Value = false,
+											},
+											scope:RadioButton {
+												Value = true,
+												Interactable = false,
+											},
+											scope:RadioButton {
+												Value = false,
+												Interactable = false,
+											},
+										},
+									},
 								},
 							},
 						},
