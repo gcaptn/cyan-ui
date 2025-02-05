@@ -52,9 +52,18 @@ local function computedUDim2(
 	end)
 end
 
-function Components.Round(scope: Fusion.Scope<any>)
+function Components.Round(scope: Fusion.Scope<any>, _props): Fusion.Child
 	return scope:New "UICorner" {
 		CornerRadius = UDim.new(1, 0),
+	}
+end
+
+function Components.Corner(scope: Fusion.Scope<any>, _props): Fusion.Child
+	local theme = Themes.ThemeContext:now()
+	local sizes = theme.Sizes
+
+	return scope:New "UICorner" {
+		CornerRadius = computedUDim(scope, 0, sizes.Corner),
 	}
 end
 
@@ -65,13 +74,11 @@ function Components.Stroke(
 	local theme = Themes.ThemeContext:now()
 	local colors, sizes = theme.Colors, theme.Sizes
 
-	return scope:New "UIStroke"(
-		mapMerge({ 
-			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-			Color = colors.Border,
-			Thickness = sizes.Border,
-		}, props)
-	)
+	return scope:New "UIStroke"(mapMerge({
+		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+		Color = colors.Border,
+		Thickness = sizes.Border,
+	}, props))
 end
 
 function Components.PadNormal(scope: Fusion.Scope<any>, _props): Fusion.Child
@@ -545,6 +552,7 @@ function Components.TextButton(
 	local scope = scope:innerScope {
 		ButtonBase = Components.ButtonBase,
 		PadSmall = Components.PadSmall,
+		Corner = Components.Corner,
 	}
 
 	local transitions = createButtonTransitions(
@@ -566,6 +574,7 @@ function Components.TextButton(
 			{
 				[Fusion.Children] = {
 					scope:PadSmall {},
+					scope:Corner {},
 					props[Fusion.Children],
 				},
 			}
@@ -587,6 +596,7 @@ function Components.CheckboxButton(
 	local scope = scope:innerScope {
 		ButtonBase = Components.ButtonBase,
 		FrameAutoXY = Components.FrameAutoXY,
+		Corner = Components.Corner,
 	}
 
 	local function handleClick()
@@ -618,6 +628,7 @@ function Components.CheckboxButton(
 				sizes.NormalIcon
 			),
 			[Fusion.OnEvent "Activated"] = handleClick,
+			[Fusion.Children] = { scope:Corner {} },
 		},
 	} :: GuiButton
 
@@ -643,6 +654,7 @@ function Components.CheckboxButton(
 				sizes.NormalIcon
 			),
 			[Fusion.OnEvent "Activated"] = handleClick,
+			[Fusion.Children] = { scope:Corner {} },
 		},
 	} :: GuiButton
 
@@ -808,6 +820,7 @@ function Components.TextInput(
 		RowContainerPadSmall = Components.RowContainerPadSmall,
 		ErrorText = Components.ErrorText,
 		Stroke = Components.Stroke,
+		Corner = Components.Corner,
 	}
 
 	local isFocused = scope:Value(false)
@@ -879,6 +892,7 @@ function Components.TextInput(
 				{
 					[Fusion.Children] = {
 						scope:PadSmall {},
+						scope:Corner {},
 						scope:Stroke {
 							Color = scope:Tween(
 								scope:Computed(function(use, scope)

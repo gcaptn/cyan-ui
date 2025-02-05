@@ -47,6 +47,7 @@ export type ThemeColorsSpec = ThemeColorsKeys<Color3>
 
 type ThemeSizesKeys<T> = {
 	Border: T,
+	Corner: T,
 	ScrollBar: T,
 	BodyText: T,
 	HeadingText: T,

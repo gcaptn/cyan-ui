@@ -30,6 +30,7 @@ local DEFAULT_THEME_COLOR_SCALE: TailwindColors.ColorScale = {
 -- TODO: Use rem units & base sizes
 local DEFAULT_SIZES: Types.ThemeSizesSpec = {
 	Border = 1,
+	Corner = 2,
 	ScrollBar = 8,
 	BodyText = 16,
 	HeadingText = 18,
