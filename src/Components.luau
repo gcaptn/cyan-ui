@@ -19,7 +19,7 @@ end
 
 local function removeProps(
 	props: Fusion.PropertyTable,
-	...: string
+	...: any
 ): Fusion.PropertyTable
 	local newProps = table.clone(props)
 	for _, property in ipairs(table.pack(...)) do
@@ -29,12 +29,6 @@ local function removeProps(
 end
 
 -- Primitives
-
-function Components.Round(scope: Fusion.Scope<any>)
-	return scope:New "UICorner" {
-		CornerRadius = UDim2.fromScale(1, 0),
-	}
-end
 
 local function computedUDim(
 	scope: Fusion.Scope<any>,
@@ -56,6 +50,21 @@ local function computedUDim2(
 	return scope:Computed(function(use)
 		return UDim2.new(use(scaleX), use(offsetX), use(scaleY), use(offsetY))
 	end)
+end
+
+function Components.Round(scope: Fusion.Scope<any>)
+	return scope:New "UICorner" {
+		CornerRadius = UDim.new(1, 0),
+	}
+end
+
+function Components.Stroke(
+	scope: Fusion.Scope<any>,
+	props: Fusion.PropertyTable
+): Fusion.Child
+	return scope:New "UIStroke"(
+		mapMerge({ ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, props)
+	)
 end
 
 function Components.PadNormal(scope: Fusion.Scope<any>, _props): Fusion.Child
@@ -379,6 +388,7 @@ local function createGuiTransitions<T>(
 	)
 end
 
+-- Utility for components that use BaseButton
 local function createButtonTransitions(
 	scope: Fusion.Scope<any>,
 	buttonType: "ImageButton" | "TextButton",
@@ -389,47 +399,61 @@ local function createButtonTransitions(
 
 	return if variant == "Primary"
 		then {
-			BackgroundColor3 = {
-				Idle = colors.Accent,
-				Hover = colors.AccentHover,
-				Press = colors.AccentPressed,
-				NonInteractable = colors.DisabledBg,
+			Button = {
+				BackgroundColor3 = {
+					Idle = colors.Accent,
+					Hover = colors.AccentHover,
+					Press = colors.AccentPressed,
+					NonInteractable = colors.DisabledBg,
+				},
+				TextColor3 = if buttonType == "TextButton"
+					then {
+						Idle = colors.AccentFg,
+						Hover = colors.AccentHoverFg,
+						Press = colors.AccentPressedFg,
+						NonInteractable = colors.DisabledFg,
+					}
+					else nil,
 			},
-			TextColor3 = if buttonType == "TextButton"
-				then {
-					Idle = colors.AccentFg,
-					Hover = colors.AccentHoverFg,
-					Press = colors.AccentPressedFg,
-					NonInteractable = colors.DisabledFg,
-				}
-				else nil,
+			Stroke = {
+				Thickness = {
+					Idle = 0,
+					Hover = 0,
+					Press = 0,
+					NonInteractable = 0,
+				},
+			},
 		}
 		else {
-			BackgroundColor3 = {
-				Idle = colors.BgSecondary,
-				Hover = colors.HoverBgSecondary,
-				Press = colors.PressedBgSecondary,
-				NonInteractable = colors.DisabledBg,
+			Button = {
+				BackgroundColor3 = {
+					Idle = colors.BgSecondary,
+					Hover = colors.HoverBgSecondary,
+					Press = colors.PressedBgSecondary,
+					NonInteractable = colors.DisabledBg,
+				},
+				TextColor3 = if buttonType == "TextButton"
+					then {
+						Idle = colors.FgSecondary,
+						Hover = colors.HoverFgSecondary,
+						Press = colors.PressedFgSecondary,
+						NonInteractable = colors.DisabledFg,
+					}
+					else nil,
 			},
-			TextColor3 = if buttonType == "TextButton"
-				then {
-					Idle = colors.FgSecondary,
-					Hover = colors.HoverFgSecondary,
-					Press = colors.PressedFgSecondary,
-					NonInteractable = colors.DisabledFg,
-				}
-				else nil,
-			BorderSizePixel = {
-				Idle = sizes.Border,
-				Hover = sizes.Border,
-				Press = sizes.Border,
-				NonInteractable = 0,
-			},
-			BorderColor3 = {
-				Idle = colors.Border,
-				Hover = colors.Border,
-				Press = colors.Border,
-				NonInteractable = colors.Border,
+			Stroke = {
+				Thickness = {
+					Idle = sizes.Border,
+					Hover = sizes.Border,
+					Press = sizes.Border,
+					NonInteractable = 0,
+				},
+				Color = {
+					Idle = colors.Border,
+					Hover = colors.Border,
+					Press = colors.Border,
+					NonInteractable = colors.Border,
+				},
 			},
 		}
 end
@@ -438,10 +462,17 @@ function Components.ButtonBase(
 	scope: Fusion.Scope<any>,
 	props: {
 		ClassName: "TextButton" | "ImageButton",
-		Transitions: { [string]: GuiStateTransitions<any> },
+		Transitions: {
+			Button: { [string]: GuiStateTransitions<any> },
+			Stroke: { [string]: GuiStateTransitions<any> },
+		},
 		ButtonProps: Fusion.PropertyTable,
 	}
 ): Fusion.Child
+	local scope = scope:innerScope {
+		Stroke = Components.Stroke,
+	}
+
 	local initiallyInteractable = Fusion.peek(props.ButtonProps.Interactable)
 
 	-- No need for a computed value, the button's OnChange sets this value
@@ -454,12 +485,15 @@ function Components.ButtonBase(
 
 	local transitionProperties = {}
 
-	for property, _ in pairs(props.Transitions) do
-		transitionProperties[property] = createGuiTransitions(
-			scope,
-			buttonState,
-			props.Transitions[property]
-		)
+	for component, _ in pairs(props.Transitions) do
+		transitionProperties[component] = {}
+		for property, _ in pairs(props.Transitions[component]) do
+			transitionProperties[component][property] = createGuiTransitions(
+				scope,
+				buttonState,
+				props.Transitions[component][property]
+			)
+		end
 	end
 
 	-- is this safe?
@@ -470,7 +504,6 @@ function Components.ButtonBase(
 			{
 				AutomaticSize = Enum.AutomaticSize.XY,
 				Size = UDim2.new(1, 0, 0, 0),
-				BorderMode = Enum.BorderMode.Outline,
 				[onGuiStateChangeProp] = function(value)
 					buttonState:set(value)
 					if
@@ -480,9 +513,17 @@ function Components.ButtonBase(
 						props.ButtonProps[onGuiStateChangeProp](value)
 					end
 				end,
+				[Fusion.Children] = {
+					scope:Stroke(transitionProperties.Stroke),
+					props.ButtonProps[Fusion.Children],
+				},
 			},
-			transitionProperties,
-			removeProps(props.ButtonProps or {}, onGuiStateChangeProp)
+			transitionProperties.Button,
+			removeProps(
+				props.ButtonProps or {},
+				onGuiStateChangeProp,
+				Fusion.Children
+			)
 		)
 	) :: GuiButton
 end
@@ -759,6 +800,7 @@ function Components.TextInput(
 		PadSmall = Components.PadSmall,
 		RowContainerPadSmall = Components.RowContainerPadSmall,
 		ErrorText = Components.ErrorText,
+		Stroke = Components.Stroke,
 	}
 
 	local isFocused = scope:Value(false)
@@ -803,29 +845,6 @@ function Components.TextInput(
 						end),
 						UI_TWEENINFO
 					),
-					BorderColor3 = scope:Tween(
-						scope:Computed(function(use, scope)
-							return if use(props.Error)
-								then use(colors.ErrorFg)
-								else if use(isFocused)
-									then use(colors.Accent)
-									else use(colors.Border)
-						end),
-						UI_TWEENINFO
-					),
-					BorderSizePixel = scope:Tween(
-						scope:Computed(function(use, scope)
-							local disabled = if props.Interactable ~= nil
-								then not use(props.Interactable)
-								else false
-
-							return if disabled -- Disabled
-								then 0
-								else use(sizes.Border)
-						end),
-						UI_TWEENINFO
-					),
-					BorderMode = Enum.BorderMode.Outline,
 					ClearTextOnFocus = false,
 					CursorPosition = -1,
 					FontFace = fonts.Body,
@@ -853,6 +872,31 @@ function Components.TextInput(
 				{
 					[Fusion.Children] = {
 						scope:PadSmall {},
+						scope:Stroke {
+							Color = scope:Tween(
+								scope:Computed(function(use, scope)
+									return if use(props.Error)
+										then use(colors.ErrorFg)
+										else if use(isFocused)
+											then use(colors.Accent)
+											else use(colors.Border)
+								end),
+								UI_TWEENINFO
+							),
+							Thickness = scope:Tween(
+								scope:Computed(function(use, scope)
+									local disabled = if props.Interactable
+											~= nil
+										then not use(props.Interactable)
+										else false
+
+									return if disabled -- Disabled
+										then 0
+										else use(sizes.Border)
+								end),
+								UI_TWEENINFO
+							),
+						},
 						props[Fusion.Children],
 					},
 				}
