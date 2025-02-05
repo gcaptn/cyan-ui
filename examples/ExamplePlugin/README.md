@@ -6,5 +6,5 @@ A basic plugin made with CyanUI that responds to Studio theme settings.
 
 ```
 wally install
-rojo build -p ExamplePlugin.rbxm
+rojo build --output ExamplePlugin.rbxm
 ```
