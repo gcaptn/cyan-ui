@@ -14,7 +14,7 @@ Installing with Wally is preferred:
 # wally.toml
 [dependencies]
 Fusion = "elttob/fusion@0.3.0"
-CyanUI = "gcaptn/cyan-ui@0.1.7"
+CyanUI = "gcaptn/cyan-ui@0.2.0"
 ```
 
 If you're using the standalone module, you'll also have to use the Fusion package inside of it.
