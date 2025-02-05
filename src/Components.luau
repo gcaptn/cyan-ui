@@ -62,8 +62,15 @@ function Components.Stroke(
 	scope: Fusion.Scope<any>,
 	props: Fusion.PropertyTable
 ): Fusion.Child
+	local theme = Themes.ThemeContext:now()
+	local colors, sizes = theme.Colors, theme.Sizes
+
 	return scope:New "UIStroke"(
-		mapMerge({ ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, props)
+		mapMerge({ 
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+			Color = colors.Border,
+			Thickness = sizes.Border,
+		}, props)
 	)
 end
 
