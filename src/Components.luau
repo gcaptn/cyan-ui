@@ -888,7 +888,7 @@ function Components.TextInput(
 						isFocused:set(false)
 					end,
 				},
-				removeProps(props, "OnChange", "HelperText", "Error", "Text"),
+				removeProps(props, "OnChange", "HelperText", "Error"),
 				{
 					[Fusion.Children] = {
 						scope:PadSmall {},
